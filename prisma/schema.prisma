@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Facility {
+  id            Int              @id @default(autoincrement())
+  name          String
+  mohLicense    String           @unique
+  lastAuditDate DateTime
+  createdAt     DateTime         @default(now())
+  items         ComplianceItem[]
+  certifications Certification[]
+  nurses        Nurse[]
+}
+
+model Certification {
+  id            Int       @id @default(autoincrement())
+  facilityId    Int
+  category      String
+  type          String
+  holderName    String
+  certNumber    String?
+  issuingBody   String
+  issueDate     DateTime?
+  expiryDate    DateTime
+  renewalDate   DateTime?
+  notes         String?
+  attachmentUrl String?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  facility      Facility  @relation(fields: [facilityId], references: [id])
+}
+
+model ComplianceItem {
+  id          Int             @id @default(autoincrement())
+  facilityId  Int
+  category    String
+  itemName    String
+  dueDate     DateTime
+  notes       String?
+  completedAt DateTime?
+  completedBy String?
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  facility    Facility        @relation(fields: [facilityId], references: [id])
+  logs        CompletionLog[]
+
+  @@unique([facilityId, itemName])
+}
+
+model CompletionLog {
+  id          Int            @id @default(autoincrement())
+  itemId      Int
+  completedAt DateTime       @default(now())
+  completedBy String         @default("Staff")
+  notes       String?
+  createdAt   DateTime       @default(now())
+  item        ComplianceItem @relation(fields: [itemId], references: [id])
+}
+
+// ── Staff Certifications Module ───────────────────────────────────────────────
+
+model Nurse {
+  id                Int               @id @default(autoincrement())
+  facilityId        Int
+  name              String
+  email             String            @unique
+  role              String            // 'RN', 'EN', 'Care Aide', etc.
+  employeeId        String?
+  whatsappNumber    String?
+  whatsappOptIn     Boolean           @default(false)
+  preferredLanguage String            @default("en") // 'en', 'fil', 'id'
+  alternativePhone  String?
+  dateJoined        DateTime?
+  internalNotes     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  facility          Facility          @relation(fields: [facilityId], references: [id])
+  nurseCerts        NurseCert[]
+  notificationLogs  NotificationLog[]
+  certUploads       CertUpload[]
+  chatMessages      ChatMessage[]
+  uploadsReviewed   CertUpload[]      @relation("ReviewedBy")
+}
+
+model NurseCert {
+  id              Int               @id @default(autoincrement())
+  nurseId         Int
+  certType        String
+  certNumber      String
+  holderName      String
+  issuingBody     String
+  issueDate       DateTime?
+  expiryDate      DateTime
+  renewalDate     DateTime?
+  attachmentUrl   String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  nurse           Nurse             @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+  notificationLogs NotificationLog[]
+  certUploads     CertUpload[]
+}
+
+model NotificationRule {
+  id                Int      @id @default(autoincrement())
+  certType          String   @default("All Certifications")
+  daysBeforeExpiry  Int
+  templateEn        String
+  templateFil       String?
+  templateId        String?
+  active            Boolean  @default(true)
+  escalateToAdmin   Boolean  @default(false)
+  escalateDays      Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model NotificationLog {
+  id              Int       @id @default(autoincrement())
+  nurseCertId     Int?
+  recipientId     Int
+  phoneNumber     String
+  language        String
+  messageText     String
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  readAt          DateTime?
+  repliedAt       DateTime?
+  replyText       String?
+  status          String    // 'sent', 'delivered', 'read', 'replied', 'failed'
+  escalated       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  nurseCert       NurseCert? @relation(fields: [nurseCertId], references: [id])
+  recipient       Nurse      @relation(fields: [recipientId], references: [id])
+}
+
+model CertUpload {
+  id              Int       @id @default(autoincrement())
+  nurseCertId     Int?
+  nurseId         Int
+  fileUrl         String
+  uploadMethod    String    @default("whatsapp") // 'whatsapp', 'web', 'email'
+  ocrStatus       String    @default("pending")  // 'pending', 'processing', 'completed', 'failed'
+  extractedData   String?   // JSON string
+  confidenceScore Float?
+  reviewedById    Int?
+  approvedAt      DateTime?
+  reviewStatus    String    @default("pending")  // 'pending', 'approved', 'rejected'
+  reviewNotes     String?
+  createdAt       DateTime  @default(now())
+  nurseCert       NurseCert? @relation(fields: [nurseCertId], references: [id])
+  nurse           Nurse      @relation(fields: [nurseId], references: [id])
+  reviewedBy      Nurse?     @relation("ReviewedBy", fields: [reviewedById], references: [id])
+}
+
+model ChatMessage {
+  id            Int      @id @default(autoincrement())
+  nurseId       Int
+  phoneNumber   String
+  direction     String   // 'inbound', 'outbound'
+  messageText   String
+  language      String?
+  intent        String?  // 'done', 'help', 'status', 'question'
+  botResponse   String?
+  handledByBot  Boolean  @default(false)
+  escalated     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  nurse         Nurse    @relation(fields: [nurseId], references: [id])
+}

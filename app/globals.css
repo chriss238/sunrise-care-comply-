@@ -2,26 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Singapore government CSS custom properties ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --sg-navy:        #1f2d5c;
+  --sg-navy-dark:   #151f42;
+  --sg-navy-light:  #2a3d6f;
+  --sg-coral:       #ed5e68;
+  --sg-coral-dark:  #d13844;
+  --sg-coral-light: #ff8087;
+  --sg-teal:        #00a5a8;
+  --sg-amber:       #f39c12;
+  --sg-red:         #d63031;
+  --sg-green:       #00b894;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f8f9fa;
+  color: #212529;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* ── Per-item status CSS variable (cannot be expressed as Tailwind utilities) ── */
+.compliance-item-overdue { --item-color: var(--sg-red); }
+.compliance-item-soon    { --item-color: var(--sg-amber); }
+.compliance-item-ok      { --item-color: var(--sg-green); }
+
+.compliance-item-base {
+  position: relative;
+}
+
+/* ── Header coral radial glow (pseudo-element) ── */
+.header-glow::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(237, 94, 104, 0.15) 0%, transparent 70%);
+  animation: pulse-slow 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ── Animation delay utilities ── */
+.animation-delay-200 { animation-delay: 0.2s; }
+.animation-delay-300 { animation-delay: 0.3s; }
+.animation-delay-400 { animation-delay: 0.4s; }
+.animation-delay-500 { animation-delay: 0.5s; }
+.animation-delay-600 { animation-delay: 0.6s; }
+.animation-delay-700 { animation-delay: 0.7s; }
+.animation-delay-800 { animation-delay: 0.8s; }
+.animation-delay-900 { animation-delay: 0.9s; }
+
+/* ── Staggered section entry delays ── */
+.section-delay-0 { animation-delay: 0.70s; }
+.section-delay-1 { animation-delay: 0.80s; }
+.section-delay-2 { animation-delay: 0.90s; }
+.section-delay-3 { animation-delay: 1.00s; }
+.section-delay-4 { animation-delay: 1.10s; }
+
+/* ── Tab active coral underline ── */
+.tab-active-link {
+  background: rgba(255, 255, 255, 0.08);
+}
+.tab-active-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--sg-coral);
+}
+
+/* ── Certification table row hover scale ── */
+.cert-row-hover {
+  transition: all 0.2s;
+}
+.cert-row-hover:hover {
+  background: #f8f9fa;
+  transform: scale(1.002);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ── Staff Certifications Module ── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.4); }
+}
+
+.status-dot-pulse {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+/* Chat bubble tail helpers (used via inline styles where needed) */
+.chat-bubble-out {
+  border-bottom-right-radius: 4px;
+}
+.chat-bubble-in {
+  border-bottom-left-radius: 4px;
+}
+
+/* Sub-tab active underline transition */
+.subtab-active {
+  border-bottom: 2px solid var(--sg-coral);
+}
+
+/* Confidence bar fill animation */
+.confidence-fill {
+  transition: width 0.6s ease-out;
 }
