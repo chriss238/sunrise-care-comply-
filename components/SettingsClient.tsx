@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import TopBar from './TopBar'
+import Tabs from './Tabs'
 
 interface AdminRow {
   id: number
@@ -18,9 +19,11 @@ const DUMMY_ADMINS: AdminRow[] = [
 
 interface Props {
   currentUserName: string
+  facilityName: string
+  mohLicense: string
 }
 
-export default function SettingsClient({ currentUserName }: Props) {
+export default function SettingsClient({ currentUserName, facilityName, mohLicense }: Props) {
   const [admins, setAdmins] = useState<AdminRow[]>(DUMMY_ADMINS)
   const [editingAdmin, setEditingAdmin] = useState<AdminRow | null>(null)
   const [addingAdmin, setAddingAdmin] = useState(false)
@@ -65,29 +68,37 @@ export default function SettingsClient({ currentUserName }: Props) {
         </div>
       )}
 
-      {/* Header */}
+      {/* Header — same pattern as all other tabs */}
       <header
-        className="relative overflow-hidden header-glow"
+        className="relative overflow-hidden sticky top-0 z-50 shadow-md header-glow"
         style={{ background: 'linear-gradient(135deg, #151f42 0%, #1f2d5c 100%)' }}
       >
         <TopBar />
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-6 relative z-10">
-          <div className="flex items-center gap-4">
-            <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
-              style={{ background: 'linear-gradient(135deg, #ed5e68 0%, #d13844 100%)', boxShadow: '0 4px 12px rgba(237,94,104,0.3)' }}
-            >
-              ⚙️
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Settings</h1>
-              <p className="text-sm text-white/70 mt-0.5">Manage admin accounts, facility info, and notification preferences</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
+                style={{ background: 'linear-gradient(135deg, #ed5e68 0%, #d13844 100%)', boxShadow: '0 4px 12px rgba(237,94,104,0.3)' }}
+                aria-hidden="true"
+              >
+                🏥
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white tracking-tight">{facilityName}</h1>
+                <div className="flex items-center gap-1.5 text-sm text-white/85 font-medium mt-0.5">
+                  <span>License:</span>
+                  <span className="px-2.5 py-0.5 rounded-md text-[13px] border border-white/20" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                    {mohLicense}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Tab placeholder spacer */}
-        <div className="h-12" />
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <Tabs />
+        </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
@@ -181,11 +192,11 @@ export default function SettingsClient({ currentUserName }: Props) {
           <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Facility Name</label>
-              <div className="px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-700">Sunrise Care Home</div>
+              <div className="px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-700">{facilityName}</div>
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">MOH License Number</label>
-              <div className="px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-700 font-mono">NH-2019-0045</div>
+              <div className="px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-700 font-mono">{mohLicense}</div>
             </div>
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">Address</label>

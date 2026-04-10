@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import Tabs from '@/components/Tabs'
 import TopBar from '@/components/TopBar'
 import { formatSgDate } from '@/lib/utils'
@@ -13,12 +12,6 @@ import CertUploadsPage from './pages/CertUploadsPage'
 import MessagesPage from './pages/MessagesPage'
 import { Suspense } from 'react'
 
-const SUB_TABS = [
-  { id: 'nurses',          label: '👩‍⚕️ Staff Details' },
-  { id: 'notifications',   label: '🔔 Notifications' },
-  { id: 'cert-uploads',    label: '📤 Cert Uploads' },
-  { id: 'messages',        label: '💬 Messages' },
-]
 
 interface Props {
   activeTab: string
@@ -84,37 +77,9 @@ export default function StaffCertsLayout({ activeTab, facilityName, mohLicense }
         </div>
       </header>
 
-      {/* ── Sub-tabs + content ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6">
-        {/* Sub-tab nav */}
-        <div className="flex gap-1 overflow-x-auto pb-1 mb-6 border-b border-gray-200">
-          {SUB_TABS.map(({ id, label }) => {
-            const isActive = id === activeTab
-            return (
-              <Link
-                key={id}
-                href={`/staff-certs/${id}`}
-                className={[
-                  'relative px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors rounded-t-lg',
-                  isActive
-                    ? 'text-[#1e2a4a] bg-white border-x border-t border-gray-200 -mb-px'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50',
-                ].join(' ')}
-              >
-                {label}
-                {isActive && (
-                  <span
-                    className="absolute bottom-0 left-0 right-0 h-0.5"
-                    style={{ background: 'var(--sg-coral)' }}
-                  />
-                )}
-              </Link>
-            )
-          })}
-        </div>
-
-        {/* Page content */}
-        <div>{renderPage(activeTab)}</div>
+      {/* ── Content ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
+        {renderPage(activeTab)}
       </div>
     </>
   )
