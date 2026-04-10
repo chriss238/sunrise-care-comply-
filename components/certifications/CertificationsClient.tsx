@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import TopBar from '@/components/TopBar'
 import type { CertWithStatus } from '@/lib/certifications'
 import { getCertStatus } from '@/lib/certifications'
 import Tabs from '@/components/Tabs'
@@ -103,9 +104,7 @@ export default function CertificationsClient({
         className="relative overflow-hidden sticky top-0 z-50 shadow-md header-glow"
         style={{ background: 'linear-gradient(135deg, #151f42 0%, #1f2d5c 100%)' }}
       >
-        <div className="absolute top-5 right-8 text-[11px] uppercase tracking-[0.15em] text-white/60 font-semibold z-10">
-          Ministry of Health · Singapore
-        </div>
+        <TopBar />
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-6 relative z-10">
           {/* Facility bar */}

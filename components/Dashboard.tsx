@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
-import { signOut } from 'next-auth/react'
+import TopBar from './TopBar'
 import type { ItemWithStatus, FilterType, FacilitySummary } from '@/lib/types'
 import { formatSgDate } from '@/lib/utils'
 import { generateMOHAuditReport } from '@/lib/pdf-export'
@@ -134,19 +134,7 @@ export default function Dashboard({ facility, initialItems, currentUserName }: P
         className="relative overflow-hidden header-glow"
         style={{ background: 'linear-gradient(135deg, #151f42 0%, #1f2d5c 100%)' }}
       >
-        <div className="absolute top-4 right-8 flex items-center gap-3 z-10">
-          <span className="text-[11px] uppercase tracking-[0.15em] text-white/60 font-semibold">
-            Ministry of Health · Singapore
-          </span>
-          <span className="text-white/40 text-xs">|</span>
-          <span className="text-[11px] text-white/70 font-medium">{currentUserName}</span>
-          <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            className="text-[11px] uppercase tracking-wider text-white/60 hover:text-white font-semibold border border-white/20 hover:border-white/50 rounded px-2 py-0.5 transition-all"
-          >
-            Sign out
-          </button>
-        </div>
+        <TopBar />
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-6 relative z-10">
           {/* Top row */}

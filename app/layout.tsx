@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Public_Sans, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+import SessionProvider from '@/components/SessionProvider'
 
 const publicSans = Public_Sans({
   subsets: ['latin'],
@@ -27,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${publicSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        {children}
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   )

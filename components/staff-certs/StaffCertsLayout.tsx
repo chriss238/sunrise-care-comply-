@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Tabs from '@/components/Tabs'
+import TopBar from '@/components/TopBar'
 import { formatSgDate } from '@/lib/utils'
 import DashboardPage from './pages/DashboardPage'
 import NursesPage from './pages/NursesPage'
@@ -49,9 +50,7 @@ export default function StaffCertsLayout({ activeTab, facilityName, mohLicense }
         className="relative overflow-hidden header-glow"
         style={{ background: 'linear-gradient(135deg, #151f42 0%, #1f2d5c 100%)' }}
       >
-        <div className="absolute top-5 right-8 text-[11px] uppercase tracking-[0.15em] text-white/60 font-semibold z-10">
-          Ministry of Health · Singapore
-        </div>
+        <TopBar />
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-6 relative z-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
