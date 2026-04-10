@@ -13,7 +13,9 @@ function getDatabaseUrl(): string {
     }
     return `file:${tmpDb}`
   }
-  return process.env.DATABASE_URL ?? 'file:./dev.db'
+  // Resolve the SQLite DB to an absolute path so it works regardless of CWD
+  const dbPath = path.join(process.cwd(), 'prisma', 'dev.db')
+  return `file:${dbPath}`
 }
 
 const globalForPrisma = globalThis as unknown as {

@@ -1,6 +1,12 @@
 export type ItemStatus = 'overdue' | 'soon' | 'ok'
 export type FilterType = 'all' | 'overdue' | 'soon' | 'staff' | 'facility' | 'medication'
 
+export interface AttachmentSummary {
+  id: number
+  filename: string
+  fileUrl: string
+}
+
 export interface ItemWithStatus {
   id: number
   facilityId: number
@@ -12,6 +18,7 @@ export interface ItemWithStatus {
   completedBy: string | null
   status: ItemStatus
   daysUntil: number
+  attachments: AttachmentSummary[]
 }
 
 export interface FacilitySummary {

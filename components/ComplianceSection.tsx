@@ -6,6 +6,7 @@ interface Props {
   icon: string
   items: ItemWithStatus[]
   onComplete: (id: number) => void
+  currentUserName: string
 }
 
 export default function ComplianceSection({
@@ -13,6 +14,7 @@ export default function ComplianceSection({
   icon,
   items,
   onComplete,
+  currentUserName,
 }: Props) {
   return (
     <section
@@ -35,7 +37,7 @@ export default function ComplianceSection({
       {/* Items */}
       <div className="flex flex-col gap-3">
         {items.map((item) => (
-          <ComplianceItem key={item.id} item={item} onComplete={onComplete} />
+          <ComplianceItem key={item.id} item={item} onComplete={onComplete} currentUserName={currentUserName} />
         ))}
       </div>
     </section>

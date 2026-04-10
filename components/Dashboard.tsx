@@ -1,17 +1,19 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import type { ItemWithStatus, FilterType, FacilitySummary } from '@/lib/types'
 import { formatSgDate } from '@/lib/utils'
 import { generateMOHAuditReport } from '@/lib/pdf-export'
 import StatsGrid from './StatsGrid'
 import FilterButtons from './FilterButtons'
 import ComplianceSection from './ComplianceSection'
+import OverdueAlertBanner from './OverdueAlertBanner'
 import Tabs from './Tabs'
 
 interface Props {
   facility: FacilitySummary
   initialItems: ItemWithStatus[]
+  currentUserName: string
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -28,7 +30,7 @@ const CATEGORY_FILTER_MAP: Partial<Record<FilterType, string>> = {
   medication: 'Medication protocols',
 }
 
-export default function Dashboard({ facility, initialItems }: Props) {
+export default function Dashboard({ facility, initialItems, currentUserName }: Props) {
   const [items, setItems] = useState<ItemWithStatus[]>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('nhCompletions') || '{}')
@@ -43,6 +45,14 @@ export default function Dashboard({ facility, initialItems }: Props) {
   })
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
   const [generatingPdf, setGeneratingPdf] = useState(false)
+  const complianceRef = useRef<HTMLDivElement>(null)
+
+  function handleBannerClick() {
+    setActiveFilter('overdue')
+    setTimeout(() => {
+      complianceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+  }
 
   async function handleGeneratePdf() {
     if (generatingPdf) return
@@ -64,6 +74,19 @@ export default function Dashboard({ facility, initialItems }: Props) {
       ok:      active.filter((i) => i.status === 'ok').length,
     }
   }, [items])
+
+  // Overdue banner — derived from live items state so it updates when items are completed
+  const overdueItems = useMemo(
+    () => items.filter((i) => i.status === 'overdue' && !i.completedAt),
+    [items]
+  )
+  const overdueCount = overdueItems.length
+  const criticalItems = useMemo(
+    () => overdueItems
+      .filter((i) => i.category === 'Staff certifications' && i.daysUntil < -30)
+      .map((i) => i.itemName),
+    [overdueItems]
+  )
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -91,7 +114,7 @@ export default function Dashboard({ facility, initialItems }: Props) {
     setItems((prev) =>
       prev.map((item) =>
         item.id === id
-          ? { ...item, completedAt: new Date().toISOString(), completedBy: 'Staff' }
+          ? { ...item, completedAt: new Date().toISOString(), completedBy: currentUserName }
           : item
       )
     )
@@ -99,6 +122,12 @@ export default function Dashboard({ facility, initialItems }: Props) {
 
   return (
     <>
+      <OverdueAlertBanner
+        overdueCount={overdueCount}
+        criticalItems={criticalItems}
+        onClickFilter={handleBannerClick}
+      />
+
       {/* ── Header ── */}
       <header
         className="relative overflow-hidden header-glow"
@@ -192,7 +221,7 @@ export default function Dashboard({ facility, initialItems }: Props) {
         </div>
 
         {/* Compliance sections */}
-        <div role="region" aria-live="polite" aria-label="Compliance items">
+        <div ref={complianceRef} role="region" aria-live="polite" aria-label="Compliance items">
           {grouped.length === 0 ? (
             <div
               className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-16 text-center text-gray-500"
@@ -211,6 +240,7 @@ export default function Dashboard({ facility, initialItems }: Props) {
                 icon={CATEGORY_ICONS[category] ?? '📋'}
                 items={categoryItems}
                 onComplete={handleComplete}
+                currentUserName={currentUserName}
               />
             ))
           )}

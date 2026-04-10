@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -90,6 +91,19 @@ async function main() {
   }
 
   console.log(`Seeded "${facility.name}": ${items.length} compliance items, ${certs.length} certifications.`)
+
+  // ── Admin User ────────────────────────────────────────────────────────────
+  await prisma.user.upsert({
+    where: { email: 'admin@sunrisecare.sg' },
+    update: {},
+    create: {
+      email: 'admin@sunrisecare.sg',
+      passwordHash: await bcrypt.hash('password123', 10),
+      name: 'Admin User',
+      role: 'ADMIN',
+    },
+  })
+  console.log('Seeded admin user: admin@sunrisecare.sg / password123')
 
   // ── Staff Certifications Module ─────────────────────────────────────────────
   await seedStaffCerts(facility.id)

@@ -50,8 +50,34 @@ model ComplianceItem {
   createdAt   DateTime        @default(now())
   facility    Facility        @relation(fields: [facilityId], references: [id])
   logs        CompletionLog[]
+  attachments Attachment[]
 
   @@unique([facilityId, itemName])
+}
+
+model Attachment {
+  id               Int            @id @default(autoincrement())
+  filename         String
+  fileUrl          String
+  fileSize         Int
+  mimeType         String
+  uploadedAt       DateTime       @default(now())
+  uploadedById     String
+  uploadedBy       User           @relation(fields: [uploadedById], references: [id])
+  complianceItemId Int
+  complianceItem   ComplianceItem @relation(fields: [complianceItemId], references: [id])
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  passwordHash String
+  name         String
+  role         String          @default("ADMIN") // "ADMIN" | "DIRECTOR_OF_NURSING" | "STAFF"
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  completions  CompletionLog[]
+  attachments  Attachment[]
 }
 
 model CompletionLog {
@@ -61,7 +87,9 @@ model CompletionLog {
   completedBy String         @default("Staff")
   notes       String?
   createdAt   DateTime       @default(now())
+  userId      String?
   item        ComplianceItem @relation(fields: [itemId], references: [id])
+  user        User?          @relation(fields: [userId], references: [id])
 }
 
 // ── Staff Certifications Module ───────────────────────────────────────────────

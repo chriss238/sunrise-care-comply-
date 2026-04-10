@@ -1,9 +1,12 @@
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/lib/auth'
 import { calculateStatus, daysUntil } from '@/lib/utils'
 import type { ItemWithStatus, FacilitySummary } from '@/lib/types'
 import Dashboard from '@/components/Dashboard'
 
 export default async function Home() {
+  const session = await auth()
+  const currentUserName = session?.user?.name ?? 'Staff'
   const facility = await prisma.facility.findFirst({
     orderBy: { id: 'asc' },
   })
@@ -23,6 +26,7 @@ export default async function Home() {
   const rawItems = await prisma.complianceItem.findMany({
     where: { facilityId: facility.id, deletedAt: null },
     orderBy: [{ category: 'asc' }, { dueDate: 'asc' }],
+    include: { attachments: { select: { id: true, filename: true, fileUrl: true } } },
   })
 
   const facilitySummary: FacilitySummary = {
@@ -43,7 +47,14 @@ export default async function Home() {
     completedBy: item.completedBy,
     status: calculateStatus(item.dueDate),
     daysUntil: daysUntil(item.dueDate),
+    attachments: item.attachments,
   }))
 
-  return <Dashboard facility={facilitySummary} initialItems={items} />
+  return (
+    <Dashboard
+      facility={facilitySummary}
+      initialItems={items}
+      currentUserName={currentUserName}
+    />
+  )
 }

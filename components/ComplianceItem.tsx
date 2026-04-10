@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import type { ItemWithStatus } from '@/lib/types'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import type { ItemWithStatus, AttachmentSummary } from '@/lib/types'
 import { formatSgDate } from '@/lib/utils'
 import ReminderModal, { loadReminder } from './ReminderModal'
 
 interface Props {
   item: ItemWithStatus
   onComplete: (id: number) => void
+  currentUserName: string
 }
 
 const STATUS_BORDER: Record<string, string> = {
@@ -22,10 +23,14 @@ const STATUS_BADGE: Record<string, { bg: string; text: string; border: string }>
   ok:      { bg: 'bg-green-50',  text: 'text-sg-green', border: 'border-sg-green' },
 }
 
-export default function ComplianceItem({ item, onComplete }: Props) {
+export default function ComplianceItem({ item, onComplete, currentUserName }: Props) {
   const [completing, setCompleting]     = useState(false)
   const [showReminder, setShowReminder] = useState(false)
   const [hasReminder, setHasReminder]   = useState(false)
+  const [attachments, setAttachments]   = useState<AttachmentSummary[]>(item.attachments)
+  const [uploading, setUploading]       = useState(false)
+  const [uploadError, setUploadError]   = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const isCompleted = item.completedAt !== null
 
   useEffect(() => {
@@ -54,13 +59,37 @@ export default function ComplianceItem({ item, onComplete }: Props) {
       // Persist to localStorage as a resilience layer
       try {
         const saved = JSON.parse(localStorage.getItem('nhCompletions') || '{}')
-        saved[item.id] = { completedAt: new Date().toISOString(), completedBy: 'Staff' }
+        saved[item.id] = { completedAt: new Date().toISOString(), completedBy: currentUserName }
         localStorage.setItem('nhCompletions', JSON.stringify(saved))
       } catch { /* storage quota or private browsing */ }
     } catch {
       // optimistic update already applied; silently ignore network errors
     } finally {
       setCompleting(false)
+    }
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('complianceItemId', String(item.id))
+      const res = await fetch('/api/upload-attachment', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) {
+        setUploadError(data.error ?? 'Upload failed')
+      } else {
+        setAttachments((prev) => [...prev, data as AttachmentSummary])
+      }
+    } catch {
+      setUploadError('Upload failed — please try again')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -100,6 +129,25 @@ export default function ComplianceItem({ item, onComplete }: Props) {
           {statusText}
         </div>
 
+        {/* Upload evidence button */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          aria-label="Upload evidence document"
+          title="Upload evidence (PDF, JPG, PNG — max 5MB)"
+          className="relative w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 hover:scale-110 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-sg-navy disabled:opacity-50"
+        >
+          <span className="text-base">{uploading ? '⏳' : attachments.length > 0 ? '📎' : '📄'}</span>
+          {attachments.length > 0 && (
+            <span
+              className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center"
+              style={{ background: '#1f2d5c' }}
+            >
+              {attachments.length}
+            </span>
+          )}
+        </button>
+
         {/* Bell / reminder button */}
         <button
           onClick={() => setShowReminder(true)}
@@ -129,6 +177,35 @@ export default function ComplianceItem({ item, onComplete }: Props) {
           {isCompleted ? 'Completed' : completing ? 'Saving…' : 'Complete'}
         </button>
       </div>
+
+      {/* Attachments row */}
+      {(attachments.length > 0 || uploadError) && (
+        <div className="w-full mt-1 flex flex-wrap items-center gap-2 text-xs">
+          {attachments.map((a) => (
+            <a
+              key={a.id}
+              href={a.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+            >
+              📎 {a.filename}
+            </a>
+          ))}
+          {uploadError && (
+            <span className="text-red-600">{uploadError}</span>
+          )}
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
       {showReminder && (
         <ReminderModal
