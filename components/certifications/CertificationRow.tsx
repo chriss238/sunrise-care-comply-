@@ -73,6 +73,32 @@ export default function CertificationRow({ cert, onEdit, onDelete }: Props) {
       {/* Actions */}
       <td className="px-5 py-4">
         <div className="flex items-center justify-end gap-2">
+          {/* View certificate */}
+          {cert.attachmentUrl ? (
+            <a
+              href={cert.attachmentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`View certificate for ${cert.holderName}`}
+              title="View certificate"
+              className={[
+                'w-8 h-8 rounded-md flex items-center justify-center text-base bg-gray-100 text-sg-navy',
+                'transition-all duration-200 hover:-translate-y-0.5 hover:bg-sg-navy hover:text-white hover:shadow-md',
+                'focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-sg-navy',
+              ].join(' ')}
+            >
+              📄
+            </a>
+          ) : (
+            <button
+              disabled
+              title="No document uploaded"
+              className="w-8 h-8 rounded-md flex items-center justify-center text-base bg-gray-100 text-gray-300 cursor-not-allowed"
+            >
+              📄
+            </button>
+          )}
+
           {/* Bell / reminder */}
           <button
             onClick={() => setShowReminder(true)}

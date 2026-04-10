@@ -1,19 +1,24 @@
 import type { ItemWithStatus } from '@/lib/types'
 import ComplianceItem from './ComplianceItem'
+import NewItemForm from './NewItemForm'
 
 interface Props {
   category: string
   icon: string
   items: ItemWithStatus[]
   onComplete: (id: number) => void
+  onUpdate: (id: number, fields: Partial<ItemWithStatus>) => void
+  onAddItem: (category: string, itemName: string, dueDate: string) => Promise<void>
+  isAddingItem: boolean
+  onStartAdd: () => void
+  onCancelAdd: () => void
   currentUserName: string
 }
 
 export default function ComplianceSection({
-  category,
-  icon,
-  items,
-  onComplete,
+  category, icon, items,
+  onComplete, onUpdate, onAddItem,
+  isAddingItem, onStartAdd, onCancelAdd,
   currentUserName,
 }: Props) {
   return (
@@ -37,8 +42,33 @@ export default function ComplianceSection({
       {/* Items */}
       <div className="flex flex-col gap-3">
         {items.map((item) => (
-          <ComplianceItem key={item.id} item={item} onComplete={onComplete} currentUserName={currentUserName} />
+          <ComplianceItem
+            key={item.id}
+            item={item}
+            onComplete={onComplete}
+            onUpdate={onUpdate}
+            currentUserName={currentUserName}
+          />
         ))}
+
+        {/* New item form */}
+        {isAddingItem && (
+          <NewItemForm
+            category={category}
+            onSave={(itemName, dueDate) => onAddItem(category, itemName, dueDate)}
+            onCancel={onCancelAdd}
+          />
+        )}
+
+        {/* Add item button */}
+        {!isAddingItem && (
+          <button
+            onClick={onStartAdd}
+            className="mt-1 flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-400 hover:border-sg-navy hover:text-sg-navy transition-all w-full justify-center"
+          >
+            + Add item
+          </button>
+        )}
       </div>
     </section>
   )

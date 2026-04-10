@@ -1,18 +1,19 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import NurseAvatar from '../shared/NurseAvatar'
 import type { NurseRow } from '@/lib/staff-certs'
 import { LANGUAGE_LABELS, ROLE_COLORS } from '@/lib/staff-certs'
+import UserDetailsPage from './UserDetailsPage'
 
 export default function NursesPage() {
-  const router = useRouter()
   const [nurses, setNurses] = useState<NurseRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterOptIn, setFilterOptIn] = useState<'all' | 'yes' | 'no'>('all')
   const [filterLang, setFilterLang] = useState('all')
+  const [editingNurseId, setEditingNurseId] = useState<string | null>(null)
+  const [addingNew, setAddingNew] = useState(false)
 
   useEffect(() => {
     fetch('/api/staff-certs/nurses')
@@ -29,6 +30,32 @@ export default function NursesPage() {
       return true
     })
   }, [nurses, search, filterOptIn, filterLang])
+
+  function handleBack() {
+    setEditingNurseId(null)
+    setAddingNew(false)
+    // Refresh list
+    fetch('/api/staff-certs/nurses')
+      .then((r) => r.json())
+      .then(setNurses)
+  }
+
+  // Show inline edit/add form
+  if (editingNurseId || addingNew) {
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-2 text-sm font-semibold text-[#1e2a4a] hover:underline"
+        >
+          ← Back to Staff List
+        </button>
+        <Suspense>
+          <UserDetailsPage nurseIdOverride={editingNurseId ?? undefined} onSaved={handleBack} />
+        </Suspense>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -60,7 +87,7 @@ export default function NursesPage() {
           📥 Import CSV
         </button>
         <button
-          onClick={() => router.push('/staff-certs/user-details')}
+          onClick={() => setAddingNew(true)}
           className="px-4 py-2 text-sm font-semibold text-white rounded-lg shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
           style={{ background: 'linear-gradient(135deg, #1e2a4a, #2a3d6f)' }}
         >
@@ -119,7 +146,7 @@ export default function NursesPage() {
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => router.push('/staff-certs/user-details?nurseId=' + nurse.id)}
+                      onClick={() => setEditingNurseId(String(nurse.id))}
                       className="text-xs font-semibold text-[#1e2a4a] hover:underline"
                     >
                       Edit →

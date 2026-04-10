@@ -15,6 +15,7 @@ interface Props {
   facility: FacilitySummary
   initialItems: ItemWithStatus[]
   currentUserName: string
+  facilityId: number
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -31,7 +32,7 @@ const CATEGORY_FILTER_MAP: Partial<Record<FilterType, string>> = {
   medication: 'Medication protocols',
 }
 
-export default function Dashboard({ facility, initialItems, currentUserName }: Props) {
+export default function Dashboard({ facility, initialItems, currentUserName, facilityId }: Props) {
   const [items, setItems] = useState<ItemWithStatus[]>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('nhCompletions') || '{}')
@@ -46,6 +47,7 @@ export default function Dashboard({ facility, initialItems, currentUserName }: P
   })
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
   const [generatingPdf, setGeneratingPdf] = useState(false)
+  const [addingToCategory, setAddingToCategory] = useState<string | null>(null)
   const complianceRef = useRef<HTMLDivElement>(null)
 
   function handleBannerClick() {
@@ -65,6 +67,35 @@ export default function Dashboard({ facility, initialItems, currentUserName }: P
     }
   }
 
+  function handleComplete(id: number) {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, completedAt: new Date().toISOString(), completedBy: currentUserName }
+          : item
+      )
+    )
+  }
+
+  function handleUpdate(id: number, fields: Partial<ItemWithStatus>) {
+    setItems((prev) => prev.map((item) => item.id === id ? { ...item, ...fields } : item))
+  }
+
+  async function handleAddItem(category: string, itemName: string, dueDate: string) {
+    const res = await fetch('/api/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ facilityId, category, itemName, dueDate }),
+    })
+    if (!res.ok) return
+    const newItem = await res.json()
+    // Re-compute status client-side (mirror server logic)
+    const days = Math.ceil((new Date(dueDate).getTime() - Date.now()) / 86400000)
+    const status = days < 0 ? 'overdue' : days <= 30 ? 'soon' : 'ok'
+    setItems((prev) => [...prev, { ...newItem, status, daysUntil: days, attachments: [] }])
+    setAddingToCategory(null)
+  }
+
   // Stats always reflect the full item list, not the filtered view
   const stats = useMemo(() => {
     const active = items.filter((i) => !i.completedAt)
@@ -76,7 +107,6 @@ export default function Dashboard({ facility, initialItems, currentUserName }: P
     }
   }, [items])
 
-  // Overdue banner — derived from live items state so it updates when items are completed
   const overdueItems = useMemo(
     () => items.filter((i) => i.status === 'overdue' && !i.completedAt),
     [items]
@@ -100,7 +130,6 @@ export default function Dashboard({ facility, initialItems, currentUserName }: P
     })
   }, [items, activeFilter])
 
-  // Group by category, preserving seed insertion order
   const grouped = useMemo(() => {
     const map = new Map<string, ItemWithStatus[]>()
     for (const item of filteredItems) {
@@ -110,16 +139,6 @@ export default function Dashboard({ facility, initialItems, currentUserName }: P
     }
     return Array.from(map.entries())
   }, [filteredItems])
-
-  function handleComplete(id: number) {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, completedAt: new Date().toISOString(), completedBy: currentUserName }
-          : item
-      )
-    )
-  }
 
   return (
     <>
@@ -176,12 +195,26 @@ export default function Dashboard({ facility, initialItems, currentUserName }: P
             </div>
           </div>
 
-          {/* Stats */}
-          <div
-            aria-live="polite"
-            aria-label="Compliance statistics"
-          >
+          {/* Stats + PDF button */}
+          <div aria-live="polite" aria-label="Compliance statistics">
             <StatsGrid stats={stats} />
+          </div>
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={handleGeneratePdf}
+              disabled={generatingPdf}
+              aria-label="Generate MOH Audit Report PDF"
+              className={[
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all',
+                'focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-white/50',
+                generatingPdf
+                  ? 'bg-white/20 text-white/50 cursor-not-allowed'
+                  : 'bg-white/15 text-white hover:bg-white/25 border border-white/20',
+              ].join(' ')}
+            >
+              <span>📄</span>
+              <span>{generatingPdf ? 'Generating…' : 'Generate MOH Audit Report'}</span>
+            </button>
           </div>
         </div>
 
@@ -194,27 +227,9 @@ export default function Dashboard({ facility, initialItems, currentUserName }: P
       {/* ── Main content ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
         {/* Filter bar */}
-        <div className="animate-fade-in-down bg-white rounded-xl px-6 py-5 mb-6 shadow-sm border border-gray-200">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-            <div className="text-xs font-semibold uppercase tracking-widest text-gray-500">
-              Filter by
-            </div>
-            <button
-              onClick={handleGeneratePdf}
-              disabled={generatingPdf}
-              aria-label="Generate MOH Audit Report PDF"
-              className={[
-                'flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all shrink-0',
-                'focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-sg-navy',
-                generatingPdf
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'text-white hover:-translate-y-0.5 hover:shadow-md active:translate-y-0',
-              ].join(' ')}
-              style={generatingPdf ? undefined : { background: 'linear-gradient(135deg, #1f2d5c 0%, #151f42 100%)' }}
-            >
-              <span>📄</span>
-              <span>{generatingPdf ? 'Generating…' : 'Generate MOH Audit Report'}</span>
-            </button>
+        <div className="animate-fade-in-down bg-white rounded-xl px-6 py-4 mb-6 shadow-sm border border-gray-200">
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3">
+            Filter by
           </div>
           <FilterButtons activeFilter={activeFilter} onFilterChange={setActiveFilter} />
         </div>
@@ -226,19 +241,22 @@ export default function Dashboard({ facility, initialItems, currentUserName }: P
               className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-16 text-center text-gray-500"
               role="status"
             >
-              <div className="text-5xl mb-4 opacity-40" aria-hidden="true">
-                📋
-              </div>
+              <div className="text-5xl mb-4 opacity-40" aria-hidden="true">📋</div>
               <p className="text-base font-medium">No compliance items match this filter.</p>
             </div>
           ) : (
-            grouped.map(([category, categoryItems], index) => (
+            grouped.map(([category, categoryItems]) => (
               <ComplianceSection
                 key={category}
                 category={category}
                 icon={CATEGORY_ICONS[category] ?? '📋'}
                 items={categoryItems}
                 onComplete={handleComplete}
+                onUpdate={handleUpdate}
+                onAddItem={handleAddItem}
+                isAddingItem={addingToCategory === category}
+                onStartAdd={() => setAddingToCategory(category)}
+                onCancelAdd={() => setAddingToCategory(null)}
                 currentUserName={currentUserName}
               />
             ))

@@ -21,7 +21,26 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
       "Bash(curl -s http://localhost:3000/ -H \"Cookie: next-auth.session-token=test\")",
       "Bash(node -e \"require\\('./lib/helpers'\\).detectDevServers\\(\\).then\\(s => console.log\\(JSON.stringify\\(s\\)\\)\\)\")",
-      "Bash(node run.js /tmp/playwright-test-subpages.js)"
+      "Bash(node run.js /tmp/playwright-test-subpages.js)",
+      "Bash(node run.js /tmp/playwright-test-vercel.js)",
+      "Bash(gh run:*)",
+      "Bash(npx vercel:*)",
+      "Bash(node run.js /tmp/playwright-test-vercel2.js)",
+      "Bash(node run.js /tmp/playwright-test-vercel3.js)",
+      "Read(//c/Users/chris/.local/share/**)",
+      "Read(//c/Users/chris/AppData/Roaming/com.vercel.cli/**)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)\\)\")",
+      "Bash(python -c \"import json; d=json.load\\(open\\('C:/Users/chris/AppData/Roaming/com.vercel.cli/Data/auth.json'\\)\\); print\\(d.get\\('token',''\\)\\)\")",
+      "Bash(curl -s 'https://api.vercel.com/v6/deployments/dpl_BtuvzdSjTvScSrdYyX964J3JZS8d/events?builds=1&limit=200' -H 'Authorization: Bearer __TRACKED_VAR__')",
+      "Bash(python -c ':*)",
+      "Bash(python -c \"import sys; print\\(sys.stdin.read\\(\\)[:3000]\\)\")",
+      "Bash(curl -s 'https://api.vercel.com/v3/deployments/dpl_BtuvzdSjTvScSrdYyX964J3JZS8d/events?builds=1' -H 'Authorization: Bearer __TRACKED_VAR__')",
+      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); [print\\(e.get\\('payload',{}\\).get\\('text',''\\)[:180]\\) for e in data if isinstance\\(e,dict\\) and e.get\\('payload',{}\\).get\\('text'\\)]\")",
+      "Bash(curl -s https://api.vercel.com/v3/deployments/dpl_BtuvzdSjTvScSrdYyX964J3JZS8d/events -H 'Authorization: Bearer __TRACKED_VAR__')",
+      "Bash(python -c \"import sys; print\\(sys.stdin.read\\(\\)[:2000]\\)\")",
+      "Bash(python:*)",
+      "Bash(cmd /c \"cd \\\\\"D:\\\\Claude MCP Lessons\\\\Nursing Home Tracker\\\\Vide code 2\\\\nextapp\\\\\" && npx tsc --noEmit 2>&1\")",
+      "Bash(cmd:*)"
     ]
   }
 }

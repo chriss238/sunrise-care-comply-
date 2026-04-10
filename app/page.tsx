@@ -55,6 +55,7 @@ export default async function Home() {
       facility={facilitySummary}
       initialItems={items}
       currentUserName={currentUserName}
+      facilityId={facility.id}
     />
   )
 }

@@ -8,6 +8,7 @@ import ReminderModal, { loadReminder } from './ReminderModal'
 interface Props {
   item: ItemWithStatus
   onComplete: (id: number) => void
+  onUpdate: (id: number, fields: Partial<ItemWithStatus>) => void
   currentUserName: string
 }
 
@@ -23,13 +24,18 @@ const STATUS_BADGE: Record<string, { bg: string; text: string; border: string }>
   ok:      { bg: 'bg-green-50',  text: 'text-sg-green', border: 'border-sg-green' },
 }
 
-export default function ComplianceItem({ item, onComplete, currentUserName }: Props) {
+export default function ComplianceItem({ item, onComplete, onUpdate, currentUserName }: Props) {
   const [completing, setCompleting]     = useState(false)
   const [showReminder, setShowReminder] = useState(false)
   const [hasReminder, setHasReminder]   = useState(false)
   const [attachments, setAttachments]   = useState<AttachmentSummary[]>(item.attachments)
   const [uploading, setUploading]       = useState(false)
   const [uploadError, setUploadError]   = useState<string | null>(null)
+  const [editing, setEditing]           = useState(false)
+  const [editName, setEditName]         = useState(item.itemName)
+  const [editDate, setEditDate]         = useState(item.dueDate.slice(0, 10))
+  const [editNotes, setEditNotes]       = useState(item.notes ?? '')
+  const [saving, setSaving]             = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isCompleted = item.completedAt !== null
 
@@ -69,6 +75,24 @@ export default function ComplianceItem({ item, onComplete, currentUserName }: Pr
     }
   }
 
+  async function handleSaveEdit() {
+    if (!editName.trim() || !editDate) return
+    setSaving(true)
+    try {
+      await fetch(`/api/items/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemName: editName.trim(), dueDate: editDate, notes: editNotes }),
+      })
+      const days = Math.ceil((new Date(editDate).getTime() - Date.now()) / 86400000)
+      const status = days < 0 ? 'overdue' : days <= 30 ? 'soon' : 'ok'
+      onUpdate(item.id, { itemName: editName.trim(), dueDate: editDate, notes: editNotes, status, daysUntil: days })
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -93,6 +117,52 @@ export default function ComplianceItem({ item, onComplete, currentUserName }: Pr
     }
   }
 
+  if (editing) {
+    return (
+      <div className="bg-blue-50 border-2 border-blue-300 rounded-xl px-5 py-4 flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            placeholder="Item name"
+            autoFocus
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+          />
+          <input
+            type="date"
+            value={editDate}
+            onChange={(e) => setEditDate(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+          />
+        </div>
+        <input
+          type="text"
+          value={editNotes}
+          onChange={(e) => setEditNotes(e.target.value)}
+          placeholder="Notes (optional)"
+          className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+        />
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={handleSaveEdit}
+            disabled={!editName.trim() || !editDate || saving}
+            className="px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider text-white disabled:opacity-50 transition-all"
+            style={{ background: 'linear-gradient(135deg, #1f2d5c 0%, #151f42 100%)' }}
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button
+            onClick={() => { setEditing(false); setEditName(item.itemName); setEditDate(item.dueDate.slice(0, 10)); setEditNotes(item.notes ?? '') }}
+            className="px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 transition-all"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className={[
@@ -112,6 +182,7 @@ export default function ComplianceItem({ item, onComplete, currentUserName }: Pr
         </h3>
         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
           <span>📅 Due: {formatSgDate(item.dueDate)}</span>
+          {item.notes && <span className="text-gray-400">· {item.notes}</span>}
           {isCompleted && (
             <span className="inline-flex items-center gap-1 bg-sg-green text-white px-2 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wide">
               ✓ Completed
@@ -121,13 +192,23 @@ export default function ComplianceItem({ item, onComplete, currentUserName }: Pr
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <div
           className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border-2 whitespace-nowrap ${badge.bg} ${badge.text} ${badge.border}`}
           aria-label={`Status: ${statusText}`}
         >
           {statusText}
         </div>
+
+        {/* Edit button */}
+        <button
+          onClick={() => setEditing(true)}
+          aria-label="Edit item"
+          title="Edit item"
+          className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 hover:scale-110 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-sg-navy text-gray-400 hover:text-sg-navy"
+        >
+          <span className="text-base">✏️</span>
+        </button>
 
         {/* Upload evidence button */}
         <button

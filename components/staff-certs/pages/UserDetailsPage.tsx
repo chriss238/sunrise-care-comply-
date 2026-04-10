@@ -12,16 +12,21 @@ const EMPTY_FORM = {
   dateJoined: '', internalNotes: '',
 }
 
-export default function UserDetailsPage() {
+interface Props {
+  nurseIdOverride?: string
+  onSaved?: () => void
+}
+
+export default function UserDetailsPage({ nurseIdOverride, onSaved }: Props = {}) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const nurseId = searchParams.get('nurseId')
+  const nurseId = nurseIdOverride ?? searchParams.get('nurseId')
 
   const [nurses, setNurses] = useState<NurseRow[]>([])
   const [editingNurse, setEditingNurse] = useState<NurseRow | null>(null)
   const [form, setForm] = useState({ ...EMPTY_FORM })
   const [saving, setSaving] = useState(false)
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(!!nurseIdOverride || (!!onSaved && !nurseIdOverride))
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
@@ -62,7 +67,7 @@ export default function UserDetailsPage() {
       internalNotes: nurse.internalNotes ?? '',
     })
     setShowForm(true)
-    router.replace('/staff-certs/user-details?nurseId=' + nurse.id)
+    if (!onSaved) router.replace('/staff-certs/user-details?nurseId=' + nurse.id)
   }
 
   async function handleSave() {
@@ -77,6 +82,7 @@ export default function UserDetailsPage() {
       setNurses((prev) => editingNurse ? prev.map((n) => n.id === saved.id ? saved : n) : [...prev, saved])
       setMsg(editingNurse ? '✅ Nurse updated.' : '✅ Nurse created.')
       setEditingNurse(saved)
+      if (onSaved) setTimeout(onSaved, 800)
     } catch (e: any) {
       setMsg('❌ Error: ' + e.message)
     } finally {
@@ -91,14 +97,15 @@ export default function UserDetailsPage() {
     setNurses((prev) => prev.filter((n) => n.id !== editingNurse.id))
     setShowForm(false)
     setEditingNurse(null)
-    router.replace('/staff-certs/user-details')
+    if (onSaved) onSaved()
+    else router.replace('/staff-certs/user-details')
   }
 
   if (showForm) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => { setShowForm(false); router.replace('/staff-certs/user-details') }} className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">← Back to list</button>
+          {!onSaved && <button onClick={() => { setShowForm(false); router.replace('/staff-certs/user-details') }} className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">← Back to list</button>}
           <span className="text-gray-300">|</span>
           <h2 className="text-base font-bold text-gray-900">{editingNurse ? `Editing: ${editingNurse.name}` : 'Add New Nurse'}</h2>
         </div>
@@ -154,7 +161,7 @@ export default function UserDetailsPage() {
           >
             {saving ? 'Saving…' : editingNurse ? 'Save Changes' : 'Create Nurse'}
           </button>
-          <button onClick={() => { setShowForm(false); router.replace('/staff-certs/user-details') }} className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">
+          <button onClick={() => { if (onSaved) onSaved(); else { setShowForm(false); router.replace('/staff-certs/user-details') } }} className="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">
             Cancel
           </button>
           {editingNurse && (

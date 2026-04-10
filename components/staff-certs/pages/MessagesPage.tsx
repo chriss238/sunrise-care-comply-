@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import NurseAvatar from '../shared/NurseAvatar'
 import type { ChatMessageRow } from '@/lib/staff-certs'
 import { formatRelativeTime, LANGUAGE_LABELS } from '@/lib/staff-certs'
@@ -16,8 +17,10 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
+  const searchParams = useSearchParams()
+  const nurseIdParam = searchParams.get('nurseId')
   const [conversations, setConversations] = useState<Conversation[]>([])
-  const [activeNurseId, setActiveNurseId] = useState<number | null>(null)
+  const [activeNurseId, setActiveNurseId] = useState<number | null>(nurseIdParam ? Number(nurseIdParam) : null)
   const [messages, setMessages] = useState<ChatMessageRow[]>([])
   const [search, setSearch] = useState('')
   const [newMsg, setNewMsg] = useState('')
@@ -28,7 +31,7 @@ export default function MessagesPage() {
   useEffect(() => {
     fetch('/api/staff-certs/messages/conversations')
       .then((r) => r.json())
-      .then((d) => { setConversations(d); setLoading(false); if (d.length > 0) setActiveNurseId(d[0].nurseId) })
+      .then((d) => { setConversations(d); setLoading(false); if (d.length > 0 && !nurseIdParam) setActiveNurseId(d[0].nurseId) })
   }, [])
 
   useEffect(() => {

@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import type { NotificationRuleRow, NotificationLogRow } from '@/lib/staff-certs'
 import { formatRelativeTime, formatSgDate, getLogStatusProps, LANGUAGE_LABELS } from '@/lib/staff-certs'
 
 export default function NotificationsPage() {
+  const router = useRouter()
   const [rules, setRules] = useState<NotificationRuleRow[]>([])
   const [logs, setLogs] = useState<NotificationLogRow[]>([])
   const [logFilter, setLogFilter] = useState('all')
@@ -129,11 +131,12 @@ export default function NotificationsPage() {
               <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Sent</th>
               <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
               <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Reply</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filteredLogs.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-12 text-gray-400">No logs match this filter.</td></tr>
+              <tr><td colSpan={8} className="text-center py-12 text-gray-400">No logs match this filter.</td></tr>
             ) : filteredLogs.map((log) => {
               const sp = getLogStatusProps(log.status)
               return (
@@ -149,6 +152,14 @@ export default function NotificationsPage() {
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-600 max-w-xs">
                     {log.replyText ? <span className="italic">"{log.replyText}"</span> : '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => router.push(`/staff-certs/messages?nurseId=${log.recipientId}`)}
+                      className="text-xs font-semibold text-[#1e2a4a] hover:underline whitespace-nowrap"
+                    >
+                      View →
+                    </button>
                   </td>
                 </tr>
               )

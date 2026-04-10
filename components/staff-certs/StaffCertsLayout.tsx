@@ -14,10 +14,7 @@ import MessagesPage from './pages/MessagesPage'
 import { Suspense } from 'react'
 
 const SUB_TABS = [
-  { id: 'dashboard',       label: '📊 Dashboard' },
-  { id: 'nurses',          label: '👩‍⚕️ Nurses' },
-  { id: 'user-details',    label: '👤 User Details' },
-  { id: 'certifications',  label: '📋 All Certifications' },
+  { id: 'nurses',          label: '👩‍⚕️ Staff Details' },
   { id: 'notifications',   label: '🔔 Notifications' },
   { id: 'cert-uploads',    label: '📤 Cert Uploads' },
   { id: 'messages',        label: '💬 Messages' },
