@@ -49,7 +49,7 @@ export default function LoginPage({ searchParams }: Props) {
               required
               autoComplete="email"
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-              placeholder="you@sunrisecare.sg"
+              defaultValue="admin@sunrisecare.sg"
             />
           </div>
 
@@ -67,7 +67,7 @@ export default function LoginPage({ searchParams }: Props) {
               required
               autoComplete="current-password"
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-              placeholder="••••••••"
+              defaultValue="password123"
             />
           </div>
 
